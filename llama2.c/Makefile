@@ -2,6 +2,19 @@
 # example override to clang: make run CC=clang
 CC = gcc
 
+# build run.c using gcc and matmul using nvcc
+.PHONY: runcuda_1
+runcuda_1: runcuda.c matmul.cu
+	gcc -O3 -c runcuda.c -o runcuda.o
+	nvcc -O3 -c matmul.cu -o matmul.o
+	nvcc -O3 runcuda.o matmul.o -o runcuda_1 -lm
+
+# build the cpu backend with counter
+.PHONY: runcount
+runcount: my_run.c
+	gcc -O3 -o my_run my_run.c -lm
+
+
 # the most basic way of building that is most likely to work on most systems
 .PHONY: run
 run: run.c
