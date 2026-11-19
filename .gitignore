@@ -8,3 +8,7 @@ llama2.c/my_run
 llama2.c/runcuda_1
 *.nsys-rep
 *.sqlite
+runcuda_1
+runcuda_2
+my_run
+*.o
