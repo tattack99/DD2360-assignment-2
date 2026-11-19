@@ -33,8 +33,6 @@ void cputimer_stop(const char* info)
 }
 
 #define MASK_WIDTH 5
-
-// Threads per block (= tile size). The Makefile can override it: make run TILE=128
 #ifndef TILE_WIDTH
 #define TILE_WIDTH 256
 #endif
@@ -44,7 +42,7 @@ __global__ void convolution_1D_basic(float *N, float *M, float *P)
 {
   int i = blockIdx.x * blockDim.x + threadIdx.x;
   int width = gridDim.x * blockDim.x;
-  int r = MASK_WIDTH / 2;   // mask radius: neighbours on each side
+  int r = MASK_WIDTH / 2;
 
   if(i<0||i>=width) return;
 
@@ -60,29 +58,23 @@ __global__ void convolution_1D_basic(float *N, float *M, float *P)
 
 __global__ void convolution_1D_tiled(float *N, float *M, float *P)
 {
-  __shared__ float input_tile[TILE_WIDTH + MASK_WIDTH - 1];   // tile + halo on both sides
+  __shared__ float input_tile[TILE_WIDTH + MASK_WIDTH - 1];
 
-  int i = blockIdx.x * blockDim.x + threadIdx.x;   // global position
-  int width = gridDim.x * blockDim.x;              // array length
-  int r = MASK_WIDTH / 2;                          // radius = 2
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  int width = gridDim.x * blockDim.x;
+  int r = MASK_WIDTH / 2;
 
-  // 1. Every thread copies its own element, shifted right by r to leave room for the left halo
   input_tile[threadIdx.x + r] = N[i];
 
-  // 2. The first r threads also load the halo: one value on the left, one on the right.
-  //    Positions outside the array get 0 (ghost cells).
   if (threadIdx.x < r) {
-    int left  = i - r;                 // r positions before this thread
-    int right = i + blockDim.x;        // just past the end of the block
+    int left  = i - r;
+    int right = i + blockDim.x;
     input_tile[threadIdx.x] = (left >= 0) ? N[left] : 0.0f;
     input_tile[threadIdx.x + blockDim.x + r] = (right < width) ? N[right] : 0.0f;
   }
 
-  // 3. Wait until the whole tile (including halo) is in shared memory
   __syncthreads();
 
-  // 4. Same weighted sum as the basic kernel, but reading from shared memory.
-  //    No edge check needed: out-of-bounds neighbours are already 0 in the tile.
   float sum = 0.0f;
   for (int j = -r; j <= r; j++) {
     sum += input_tile[threadIdx.x + r + j] * M[j + r];
@@ -121,7 +113,7 @@ int main(int argc, char *argv[])
   float *deviceN;
   float *deviceM;
   float *deviceP;
-  float *deviceP_tiled;   
+  float *deviceP_tiled;
   cputimer_start();
   gpuCheck(cudaMalloc((void **)&deviceN,size_N));
   gpuCheck(cudaMalloc((void **)&deviceM,size_M));
