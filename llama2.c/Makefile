@@ -87,3 +87,8 @@ testcc:
 clean:
 	rm -f run
 	rm -f runq
+
+runcuda_2: runcuda.c matmul_opt.cu
+	gcc -O3 -c runcuda.c -o runcuda.o
+	nvcc -O3 -c matmul_opt.cu -o matmul_opt.o
+	nvcc -O3 runcuda.o matmul_opt.o -o runcuda_2 -lm

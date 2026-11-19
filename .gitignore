@@ -1,2 +1,10 @@
 build/*
 !build/.gitkeep
+llama2.c/stories15M.bin
+llama2.c/*.o
+llama2.c/run
+llama2.c/runq
+llama2.c/my_run
+llama2.c/runcuda_1
+*.nsys-rep
+*.sqlite
