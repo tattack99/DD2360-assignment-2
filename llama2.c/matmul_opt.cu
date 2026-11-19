@@ -16,7 +16,7 @@ static float* find_device_weight(float* w);
 
 static float *d_xout, *d_x;
 typedef struct { float* host; float* dev; } Entry;  // host ptr of a weight matrix -> its GPU copy
-static Entry table[64];      // this model has 43 weight matrices
+static Entry table[64];      // this model has 43 weight matrices, 64 len array sufficient
 static int num_entries = 0;
 
 extern "C" void matmul(float* xout, float* x, float* w, int n, int d) {
@@ -32,6 +32,7 @@ extern "C" void matmul(float* xout, float* x, float* w, int n, int d) {
     // d_x:    largest n = hidden_dim = 768   (w2 matmul)
     if (d_xout == NULL) { cudaMalloc((void**)&d_xout, 32000 * sizeof(float)); }
     if (d_x == NULL)    { cudaMalloc((void**)&d_x,    768 * sizeof(float)); }
+
     if (d_w == NULL)    { 
       cudaMalloc((void**)&d_w,    size_w); 
       cudaMemcpy(d_w, w, size_w, cudaMemcpyHostToDevice);
